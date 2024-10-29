@@ -1,29 +1,39 @@
 package db
 
 import (
-	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var (
-	DB *sql.DB
+	DB *gorm.DB
 )
 
 // Подключаемся к базе данных
 func Connect(connStr string) {
 	var err error
-	DB, err = sql.Open("postgres", connStr)
+	DB, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Ошибка подключения к базе данных:", err)
 	}
 
-	if err = DB.Ping(); err != nil {
-		log.Fatalf("Ошибка проверки соединения с базой данных: %v", err)
+	// Проверяем соединение с базой данных
+	sqlDB, err := DB.DB()
+	if err != nil {
+		fmt.Println("Error getting DB instance:", err)
+		return
 	}
 
-	log.Println("Успешное подключение к базе данных!")
+	if err := sqlDB.Ping(); err != nil {
+		fmt.Println("Database connection failed:", err)
+	} else {
+		fmt.Println("Database connection successful!")
+	}
+
 }
 
 // InitTables инициализирует таблицы
@@ -50,9 +60,9 @@ func InitTables() {
         post_id INTEGER REFERENCES posts(id),
 		date DATE NOT NULL,
         content TEXT NOT NULL,
-		likes INTEGER NOT NULL,
+		likes INTEGER NOT NULL
     );`
-	_, err := DB.Exec(query)
+	err := DB.Exec(query).Error
 	if err != nil {
 		log.Fatal("Ошибка инициализации таблиц:", err)
 	}
