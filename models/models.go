@@ -24,3 +24,10 @@ type Comment struct {
 	Content string `json:"content"`
 	Likes   int    `json:"likes"`
 }
+
+type Like struct {
+	ID        int  `json:"id" gorm:"primaryKey"`
+	UserID    int  `json:"user_id"`
+	PostID    *int `json:"post_id,omitempty"`
+	CommentID *int `json:"comment_id,omitempty"`
+}

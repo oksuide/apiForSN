@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Подключаемся в дотенву
+	// Подключаемся к .env
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -22,24 +22,43 @@ func main() {
 
 	// Создание роутера
 	router := gin.Default()
+
 	// Подключение к базе данных
 	connStr := os.Getenv("ConnStr")
-
 	db.Connect(connStr)
 	db.InitTables()
 
-	// Применяем AuthMiddleware ко всем маршрутам, требующим авторизации
+	// Группа маршрутов для авторизованных пользователей
 	authorized := router.Group("/api")
 	authorized.Use(middleware.AuthMiddleware())
+
+	// Группа маршрутов для пользователей
+	users := authorized.Group("/users")
 	{
-		// Чтение данных о пользователе по ID
-		authorized.GET("/user", handlers.GetUser)
-		// Обновление данных пользователя по ID
-		authorized.PUT("/user", handlers.UpdateUser)
-		// Удаление пользователя по IDhandlershandlers
-		authorized.DELETE("/users/:id", handlers.DeleteUser)
-		// Создание пользователя
-		authorized.POST("/users", handlers.CreateUser)
+		users.GET("/:id", handlers.GetUser)       // Получение пользователя по ID
+		users.PUT("/:id", handlers.UpdateUser)    // Обновление данных пользователя по ID
+		users.DELETE("/:id", handlers.DeleteUser) // Удаление пользователя по ID
+		users.POST("/", handlers.CreateUser)      // Создание пользователя
+	}
+
+	// Группа маршрутов для постов
+	posts := authorized.Group("/posts")
+	{
+		posts.POST("/", handlers.CreatePost)           // Создание поста
+		posts.GET("/:postID", handlers.GetPost)        // Получение поста по ID
+		posts.PUT("/:postID", handlers.UpdatePost)     // Обновление поста по ID
+		posts.DELETE("/:postID", handlers.DeletePost)  // Удаление поста по ID
+		posts.POST("/:postID/like", handlers.LikePost) // Лайк поста
+	}
+
+	// Группа маршрутов для комментариев
+	comments := authorized.Group("/comments")
+	{
+		comments.POST("/posts/:postID/comments/", handlers.CreateComment)              // Создание комментария
+		comments.GET("/posts/:postID/comments/:commentID", handlers.GetComment)        // Получение комментария по ID
+		comments.PUT("/posts/:postID/comments/:commentID", handlers.UpdateComment)     // Обновление комментария по ID
+		comments.DELETE("/posts/:postID/comments/:commentID", handlers.DeleteComment)  // Удаление комментария по ID
+		comments.POST("/posts/:postID/comments/:commentID/like", handlers.LikeComment) // Лайк комментария
 	}
 
 	// Запуск сервера на порту 8080
@@ -47,13 +66,3 @@ func main() {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
 	}
 }
-
-// // Простой пример маршрута, где /ping - путь, 200 - HTTP статус, что все ок
-// // Сокращение для map[string]interface{}, которое используется для создания JSON-ответа.
-// // Создаем JSON с полем "message" и значением "pong".
-
-// router.GET("/ping", func(c *gin.Context) {
-//     c.JSON(200, gin.H{
-//         "message": "pong",
-//     })
-// })
