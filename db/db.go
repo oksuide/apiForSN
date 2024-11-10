@@ -61,7 +61,13 @@ func InitTables() {
 		date DATE NOT NULL,
         content TEXT NOT NULL,
 		likes INTEGER NOT NULL
-    );`
+    );
+	CREATE TABLE IF NOT EXISTS likes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        post_id INTEGER REFERENCES posts(id),
+		comment_id INTEGER REFERENCES comments(id)
+	);`
 	err := DB.Exec(query).Error
 	if err != nil {
 		log.Fatal("Ошибка инициализации таблиц:", err)
