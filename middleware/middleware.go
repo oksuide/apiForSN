@@ -3,6 +3,7 @@ package middleware
 import (
 	"apiForSN/auth"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -44,6 +45,52 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("userID", claims.UserID)
 
 		// Переходим к следующему обработчику
+		c.Next()
+	}
+}
+
+func PostIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		postID := c.Param("postID")
+		if postID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "postID is required"})
+			c.Abort()
+			return
+		}
+
+		// Конвертируем postID в int
+		id, err := strconv.Atoi(postID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid postID"})
+			c.Abort()
+			return
+		}
+
+		// Сохраняем postID в контексте
+		c.Set("postID", id)
+		c.Next()
+	}
+}
+
+func CommentIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		commentID := c.Param("commentID")
+		if commentID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "commentID is required"})
+			c.Abort()
+			return
+		}
+
+		// Конвертируем commentID в int
+		id, err := strconv.Atoi(commentID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid commentID"})
+			c.Abort()
+			return
+		}
+
+		// Сохраняем commentID в контексте
+		c.Set("commentID", id)
 		c.Next()
 	}
 }

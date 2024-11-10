@@ -1,6 +1,7 @@
 package main
 
 import (
+	"apiForSN/db"
 	"apiForSN/handlers"
 	"apiForSN/middleware"
 	"log"
@@ -9,8 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-
-	"github.com/oksuide/apiForSN/db"
 )
 
 func main() {
@@ -20,45 +19,45 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Создание роутера
-	router := gin.Default()
-
 	// Подключение к базе данных
 	connStr := os.Getenv("ConnStr")
 	db.Connect(connStr)
 	db.InitTables()
 
-	// Группа маршрутов для авторизованных пользователей
+	// Создание роутера
+	router := gin.Default()
+
+	// Применяем AuthMiddleware ко всем маршрутам, требующим авторизации
 	authorized := router.Group("/api")
 	authorized.Use(middleware.AuthMiddleware())
-
-	// Группа маршрутов для пользователей
-	users := authorized.Group("/users")
 	{
-		users.GET("/:id", handlers.GetUser)       // Получение пользователя по ID
-		users.PUT("/:id", handlers.UpdateUser)    // Обновление данных пользователя по ID
-		users.DELETE("/:id", handlers.DeleteUser) // Удаление пользователя по ID
-		users.POST("/", handlers.CreateUser)      // Создание пользователя
-	}
+		// Роуты для работы с пользователями
+		authorized.GET("/user", handlers.GetUser)
+		authorized.PUT("/user", handlers.UpdateUser)
+		authorized.DELETE("/users/:id", handlers.DeleteUser)
+		authorized.POST("/users", handlers.CreateUser)
 
-	// Группа маршрутов для постов
-	posts := authorized.Group("/posts")
-	{
-		posts.POST("/", handlers.CreatePost)           // Создание поста
-		posts.GET("/:postID", handlers.GetPost)        // Получение поста по ID
-		posts.PUT("/:postID", handlers.UpdatePost)     // Обновление поста по ID
-		posts.DELETE("/:postID", handlers.DeletePost)  // Удаление поста по ID
-		posts.POST("/:postID/like", handlers.LikePost) // Лайк поста
-	}
+		// Роуты для постов
+		posts := authorized.Group("/posts")
+		{
+			posts.Use(middleware.PostIDMiddleware()) // Применяем middleware для postID
+			posts.GET("/:postID", handlers.GetPost)
+			posts.PUT("/:postID", handlers.UpdatePost)
+			posts.DELETE("/:postID", handlers.DeletePost)
+			posts.POST("/", handlers.CreatePost)
+			posts.POST("/:postID/like", handlers.LikePost)
+		}
 
-	// Группа маршрутов для комментариев
-	comments := authorized.Group("/comments")
-	{
-		comments.POST("/posts/:postID/comments/", handlers.CreateComment)              // Создание комментария
-		comments.GET("/posts/:postID/comments/:commentID", handlers.GetComment)        // Получение комментария по ID
-		comments.PUT("/posts/:postID/comments/:commentID", handlers.UpdateComment)     // Обновление комментария по ID
-		comments.DELETE("/posts/:postID/comments/:commentID", handlers.DeleteComment)  // Удаление комментария по ID
-		comments.POST("/posts/:postID/comments/:commentID/like", handlers.LikeComment) // Лайк комментария
+		// Роуты для комментариев
+		comments := authorized.Group("/comments")
+		{
+			comments.Use(middleware.CommentIDMiddleware()) // Применяем middleware для commentID
+			comments.GET("/:commentID", handlers.GetComment)
+			comments.PUT("/:commentID", handlers.UpdateComment)
+			comments.DELETE("/:commentID", handlers.DeleteComment)
+			comments.POST("/", handlers.CreateComment)
+			comments.POST("/:commentID/like", handlers.LikeComment)
+		}
 	}
 
 	// Запуск сервера на порту 8080

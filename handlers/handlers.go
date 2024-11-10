@@ -209,12 +209,8 @@ func CreatePost(c *gin.Context) {
 
 func DeletePost(c *gin.Context) {
 	// Получаем ID поста и ID пользователя из контекста
-	postID, postExists := c.Get("postID")
-	userID, userExists := c.Get("userID")
-	if !postExists || !userExists {
-		c.JSON(400, gin.H{"error": "Invalid request data"})
-		return
-	}
+	postID, _ := c.Get("postID")
+	userID, _ := c.Get("userID")
 	// Ищем пост в базе данных по ID
 	var post models.Post
 	if err := db.DB.Where("id = ?", postID).First(&post).Error; err != nil {
@@ -249,12 +245,8 @@ func DeletePost(c *gin.Context) {
 
 func UpdatePost(c *gin.Context) {
 	// Получаем ID поста и ID пользователя из контекста
-	postID, postExists := c.Get("postID")
-	userID, userExists := c.Get("userID")
-	if !postExists || !userExists {
-		c.JSON(400, gin.H{"error": "Invalid request data"})
-		return
-	}
+	postID, _ := c.Get("postID")
+	userID, _ := c.Get("userID")
 
 	// Ищем пост в базе данных по ID
 	var post models.Post
@@ -376,12 +368,9 @@ func CreateComment(c *gin.Context) {
 }
 
 func DeleteComment(c *gin.Context) {
-	commentID, commentExists := c.Get("commentID")
-	userID, userExists := c.Get("userID")
-	if !userExists || !commentExists {
-		c.JSON(400, gin.H{"error": "Invalid request data"})
-		return
-	}
+	commentID, _ := c.Get("commentID")
+	userID, _ := c.Get("userID")
+
 	// Ищем комментарий в базе данных по ID
 	var comment models.Comment
 	if err := db.DB.Where("id = ?", commentID).First(&comment).Error; err != nil {
@@ -414,12 +403,8 @@ func DeleteComment(c *gin.Context) {
 
 func UpdateComment(c *gin.Context) {
 	// Получаем ID комментария и ID пользователя из контекста
-	commentID, postExists := c.Get("commentID")
-	userID, userExists := c.Get("userID")
-	if !postExists || !userExists {
-		c.JSON(400, gin.H{"error": "Invalid request data"})
-		return
-	}
+	commentID, _ := c.Get("commentID")
+	userID, _ := c.Get("userID")
 
 	// Ищем комментарий в базе данных по ID
 	var comment models.Post
@@ -502,13 +487,8 @@ func GetComment(c *gin.Context) {
 
 // Блок работы с лайками
 func LikePost(c *gin.Context) {
-	userID, userExists := c.Get("userID")
-	postID, postExists := c.Get("postID")
-
-	if !userExists || !postExists {
-		c.JSON(400, gin.H{"error": "Invalid request data"})
-		return
-	}
+	userID, _ := c.Get("userID")
+	postID, _ := c.Get("postID")
 
 	// Проверка, ставил ли уже лайк этот пользователь, и удаление лайка, если он стоит
 	var like models.Like
@@ -549,12 +529,8 @@ func LikePost(c *gin.Context) {
 }
 
 func LikeComment(c *gin.Context) {
-	userID, userExists := c.Get("userID")
-	commentID, commentExists := c.Get("commentID")
-	if !userExists || !commentExists {
-		c.JSON(400, gin.H{"error": "Invalid request data"})
-		return
-	}
+	userID, _ := c.Get("userID")
+	commentID, _ := c.Get("commentID")
 
 	// Проверка, ставил ли уже лайк этот пользователь и удалить в случае, если он стоит
 	var like models.Like
